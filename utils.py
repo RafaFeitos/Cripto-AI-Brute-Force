@@ -1,29 +1,25 @@
 # utils.py
 import pandas as pd
-from sklearn.preprocessing import LabelEncoder
+import numpy as np
+from data import DATASET_PATH
 
 def carregar_dados(caminho_csv):
-    """
-    Carrega os dados do arquivo CSV e retorna X, y.
-    """
     df = pd.read_csv(caminho_csv)
 
-    # Verifica se há colunas 'entrada' e 'saida'
-    if 'entrada' not in df.columns or 'saida' not in df.columns:
-        raise ValueError("CSV deve conter colunas 'entrada' e 'saida'")
+    # Verifica se as colunas esperadas estão presentes
+    colunas_esperadas = {'mensagem', 'chave', 'salt', 'mensagem_criptografada'}
+    if not colunas_esperadas.issubset(df.columns):
+        raise ValueError(f"CSV deve conter as colunas {colunas_esperadas}")
 
-    X = df['entrada'].values
-    y = df['saida'].values
+    # Concatena mensagem, chave e salt como string de entrada para o modelo
+    X = df['mensagem'] + df['chave'] + df['salt']
+    y = df['mensagem_criptografada']
+
     return X, y
 
-def codificar_dados(X, y):
+def codificar_palavra(palavra):
     """
-    Codifica strings em números com LabelEncoder para uso na rede neural.
+    Codifica uma palavra de 8 letras em vetor de inteiros normalizados.
+    Cada letra é convertida para (ord(char) - 65) / 25 → entre 0 e 1 (A-Z)
     """
-    encoder_x = LabelEncoder()
-    encoder_y = LabelEncoder()
-
-    X_encoded = encoder_x.fit_transform(X)
-    y_encoded = encoder_y.fit_transform(y)
-
-    return X_encoded, y_encoded, encoder_x, encoder_y
+    return np.array([(ord(c) - 65) / 25 for c in palavra])  # A=0.0, Z=1.0

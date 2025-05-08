@@ -1,32 +1,43 @@
-# main.py
-from data import obter_dataset
-from model import criar_modelo
-from sklearn.model_selection import train_test_split
+from data import gerar_dataset
+from model import treinar_modelo, testar_modelo
 
-# Caminho para o CSV com os dados
-CAMINHO_CSV = "dataset/dados.csv"
+def menu():
+    while True:
+        print("\n=== CriptoIA - Menu Principal ===")
+        print("1. Gerar dataset e treinar IA")
+        print("2. Testar uma entrada manual")
+        print("3. Sair")
 
-# Carrega e prepara os dados
-X, y, encoder_x, encoder_y = obter_dataset(CAMINHO_CSV)
+        opcao = input("Escolha uma opção: ")
 
-# Divide os dados para treino/teste
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+        if opcao == '1':
+            qtd = input("Quantas amostras deseja gerar para o dataset? (padrão: 1000): ")
+            qtd = int(qtd) if qtd.isdigit() else 1000
+            gerar_dataset(qtd)
+            treinar_modelo()
 
-# Redimensiona entrada para ter uma dimensão adicional (necessário para Keras)
-import numpy as np
-X_train = np.array(X_train).reshape(-1, 1)
-X_test = np.array(X_test).reshape(-1, 1)
+        elif opcao == '2':
+            mensagem = input("Digite a MENSAGEM (8 letras MAIÚSCULAS): ").strip().upper()
+            chave = input("Digite a CHAVE (4 letras MAIÚSCULAS): ").strip().upper()
+            salt = input("Digite o SALT (4 letras MAIÚSCULAS): ").strip().upper()
 
-# Cria o modelo
-modelo = criar_modelo(input_dim=1, output_dim=len(set(y)))
+            if not (len(mensagem) == 8 and mensagem.isalpha()):
+                print("Mensagem inválida. Deve ter exatamente 8 letras MAIÚSCULAS.")
+                continue
+            if not (len(chave) == 4 and chave.isalpha()):
+                print("Chave inválida. Deve ter exatamente 4 letras MAIÚSCULAS.")
+                continue
+            if not (len(salt) == 4 and salt.isalpha()):
+                print("Salt inválido. Deve ter exatamente 4 letras MAIÚSCULAS.")
+                continue
 
-# Treina o modelo
-modelo.fit(X_train, y_train, epochs=20, batch_size=4, validation_data=(X_test, y_test))
+            testar_modelo(mensagem, chave, salt)
 
-# Testa uma previsão
-entrada_exemplo = X[0]  # Já está codificado
-entrada_exemplo = np.array([[entrada_exemplo]])
-pred = modelo.predict(entrada_exemplo)
-saida_prevista = encoder_y.inverse_transform([pred.argmax()])[0]
+        elif opcao == '3':
+            print("Encerrando o programa...")
+            break
+        else:
+            print("Opção inválida. Tente novamente.")
 
-print(f"Saída prevista para 'abc': {saida_prevista}")
+if __name__ == '__main__':
+    menu()
